@@ -106,10 +106,27 @@ ggplot() +
 
 ```
 
-
+In a real world example, our prior could have been centered around 95% (based on our earlier statement regarding the average availability at most big-box retailers)
 
 ## Calculating the Posterior
 
+
+
 ## Sensitivity to Priors
+As can be seen from these examples, the posterior distribution strikes a balance between both the prior and the likelihood distributions.The weights assigned to the prior and the likelihood in calculating the posterior depends on how strongly we express our prior belief and the volume of the data respectively.
+For instance, we could have expressed our pessimistic prior using a beta(2,8) or beta(1,4), both of which have the same mean of 20% (same as our existing prior) but would indicate a lower confidence in our prior belief.
+
+In the graph below, we re-calculate the posterior for the same problem, but using a weaker prior of beta(1,4) - as can be seen, in this case the posterior is more strongly influenced by the likelihood.
+
+<insert graph here>
+
+Another option to reduce the influence on the prior would be to get more data, wherever possible. 
+In the graph below, we use a likelihood based on 500 SKUs (450 of which were available). Again, the posterior is impcted more by the data.
+
+<insert graph below>
+
+## Potential Drawbacks
+As easy as it is to build a toy example, using conjugate priors is rarely useful in the real world - typically because only simple likelihood functions have conjugate priors. which may not always work for real world examples.
+Also, it's not always easy to express all prior knowledge in the mathematical form of a conjugate prior.
 
 ## Conclusion
