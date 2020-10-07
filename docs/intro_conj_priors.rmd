@@ -1,0 +1,132 @@
+---
+title: "Introduction to Conjugate Priors"
+author: "Omkar Shetty"
+date: "18/06/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+
+## Introduction
+This note book is based on material created for a presentation on Bayesian Analysis Techniques. The objective is to walk a would-be Bayesian through a toy example solved using Conjugate Priors. A secondary goal is to highlight potential drawbacks and why ultmately an MCMC based analysis is required for most real world examples.
+
+This example will use a beta-binomial framework.
+
+## Problem Definition
+
+Product availability is a fundamental problem in the retail world and organizations use a multitude of solutions to predict/detect on-shelf availability including predictive models and computer vision. While this section will not deal with predicting availability directly, we will take a stab at understanding the true underlying availability for a toy example based on some simulated data.
+
+
+## Binomial and Beta Distributions - a quick recap
+
+For this example, we will use a beta prior and a binomial likelihood that lend themselves well to such a problem and coincidentally happen to fit the conjugate prior framework as well !
+
+### Beta Distribution
+
+A beta distribution is commonly used as a prior for probabilities and proportions, because of two main reasons :
+- values range between 0 and 1
+- very flexible; can be used to express a wide range of beliefs
+
+A few examples of beta priors are given below:
+
+```{r echo=FALSE}
+theta <- seq(0,1,0.01)
+
+ggplot() +
+  geom_line(aes(x = theta, y = dbeta(theta, 1, 1), col = 'a = 1; b = 1')) +
+  geom_line(aes(x = theta, y = dbeta(theta, .1, .1), col = 'a = 0.1; b = 0.1')) +
+  geom_line(aes(x = theta, y = dbeta(theta, 2, 8), col = 'a = 2; b = 8')) +
+  geom_line(aes(x = theta, y = dbeta(theta, 8, 2), col = 'a = 8; b = 2')) +
+  labs(x = 'theta', y = 'P(theta)', colour = 'Shape Factors') +
+  theme_bw()
+
+```
+
+The functional form for a beta distribution is given by :
+
+$$beta(a,b) = \frac{\theta^{a-1}(1 - \theta)^{b-1} }{\beta(a,b)} $$
+where $$ a, b > 0 $$
+Here a and b are called the shape factors and the $\beta$(a,b) is the beta function which is used as a normalising constant.
+
+We will be using a beta distribution to express our prior belief of what the true availability % of SKUs is.
+
+### Binomial Distribution
+
+A binomial distribution is often used to express the distribution of the probability of getting Z successes from N independent trials, where each trial can have a success/failure outcome.
+For the availability problem, we can construct each observation as a success/failure outcome, where a successful observation would imply that the product was available throughout the day and a unsuccessful observation would be one where the SKU was not available for purchase at some time throughout the day.
+
+$$binomial(y|N,p) = \frac{N!}{y!(N-y)!}\cdot p^y \cdot (1-p)^{N-y} = {{N}\choose{y}} \cdot p^y \cdot (1-p)^{N-y}$$
+
+## Specifying the Prior and Likelihood
+In this section, we specify the priors and the likelihood function for the availability example.
+
+### Likelihood
+
+The goal here is to understand the true proprtion of products that are available in a store. For the data, lets assume 80 unique products (randomly selected) were monitored throughout the day - and any product that wasn't available on the shelf at any time during the day is classified as unavailable.
+In this example, lets assume 73/80 SKUs were available all throughout the day. (as a reference most big-box retailers can maintain a 90% availability or higher).
+
+Using the form above, a binomial distribution is used to represent this trial - with each available SKU representing a success (given by 1) and missing SKUs defined by a 0.
+
+```{r}
+#define a likelihood function
+likelihood <- function(n,y,theta){
+  return(choose(n,y)*(theta^y)*((1-theta)^(n-y)))
+}
+
+
+#Binomial distribution for the 80 observed SKUs
+lik <- data.frame(theta = theta, likelihood = likelihood(80,73,theta))
+
+ggplot(data = lik, aes(x = theta, y = likelihood)) + geom_line(col = 'black') +
+  labs(x = 'theta', y = 'P(D|theta)') + theme_bw()
+
+```
+
+
+### What is the best prior to go with ?
+
+Usually, the aspect of Bayesian analysis that most concerns newer entrants is the bias associated with selecting a prior. To highlight the impact of priors, we will use two options,
+-a. a flat prior (analogous to a uniform distribution)
+-b. a strongly pessimistic prior with an expected average of ~ 20%
+
+As an illustration, the two priors are plotted below :
+
+
+```{r}
+theta <- seq(0,1,0.01)
+
+ggplot() +
+  geom_line(aes(x = theta, y = dbeta(theta, 1, 1), col = 'Flat Prior')) +
+  geom_line(aes(x = theta, y = dbeta(theta, 4, 16), col = 'Pessimistic Prior')) +
+  labs(x = 'theta', y = 'P(theta)', colour = 'Priors') +
+  theme_bw()
+
+```
+
+In a real world example, our prior could have been centered around 95% (based on our earlier statement regarding the average availability at most big-box retailers)
+
+## Calculating the Posterior
+
+
+
+## Sensitivity to Priors
+As can be seen from these examples, the posterior distribution strikes a balance between both the prior and the likelihood distributions.The weights assigned to the prior and the likelihood in calculating the posterior depends on how strongly we express our prior belief and the volume of the data respectively.
+For instance, we could have expressed our pessimistic prior using a beta(2,8) or beta(1,4), both of which have the same mean of 20% (same as our existing prior) but would indicate a lower confidence in our prior belief.
+
+In the graph below, we re-calculate the posterior for the same problem, but using a weaker prior of beta(1,4) - as can be seen, in this case the posterior is more strongly influenced by the likelihood.
+
+<insert graph here>
+
+Another option to reduce the influence on the prior would be to get more data, wherever possible. 
+In the graph below, we use a likelihood based on 500 SKUs (450 of which were available). Again, the posterior is impcted more by the data.
+
+<insert graph below>
+
+## Potential Drawbacks
+As easy as it is to build a toy example, using conjugate priors is rarely useful in the real world - typically because only simple likelihood functions have conjugate priors. which may not always work for real world examples.
+Also, it's not always easy to express all prior knowledge in the mathematical form of a conjugate prior.
+
+## Conclusion
