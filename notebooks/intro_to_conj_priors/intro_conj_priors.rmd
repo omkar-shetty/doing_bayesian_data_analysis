@@ -76,9 +76,11 @@ likelihood <- function(n,y,theta){
   return(choose(n,y)*(theta^y)*((1-theta)^(n-y)))
 }
 
+N_total <- 80
+N_avail <- 73
 
 #Binomial distribution for the 80 observed SKUs
-lik <- data.frame(theta = theta, likelihood = likelihood(80,73,theta))
+lik <- data.frame(theta = theta, likelihood = likelihood(N_total,N_avail,theta))
 
 ggplot(data = lik, aes(x = theta, y = likelihood)) + geom_line(col = 'black') +
   labs(x = 'theta', y = 'P(D|theta)') + theme_bw()
@@ -106,9 +108,30 @@ ggplot() +
 
 ```
 
-In a real world example, our prior could have been centered around 95% (based on our earlier statement regarding the average availability at most big-box retailers)
+In a real world example, our prior could have been centered around 95% (based on our earlier statement regarding the average availability at most big-box retailers).
+
+For now, we'll go with a pessimistic prior.
+
+```{r}
+
+a_0 <-  4
+b_0 <-  16
+
+```
+
 
 ## Calculating the Posterior
+
+Now for the easiest part. Since the problem has been setup with conjugat priors, all we need to do for getting the posterior distribution is updated the beta parameters based on our data :
+
+```{r}
+
+a_post <- a_0 + N_avail
+b_post <- b_0 + N_total - N_avail
+
+
+
+```
 
 
 
